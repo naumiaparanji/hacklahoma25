@@ -70,11 +70,13 @@ css = """
             color: white;
             border-radius: 12px;
             padding: 10px 20px;
-            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.2);
+            box-shadow: 0px 5px 10px #656d4a;
             transition: 0.3s;
         }
         .stButton>button:hover {
             background-color: #656d4a;
+            color: white;
+            border-color: #656d4a;
         }
         .stTextInput>div>input {
             background-color: #656d4a;
