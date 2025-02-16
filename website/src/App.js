@@ -1,26 +1,15 @@
-import React, { useState } from 'react';
-import AudioRecorder from './components/AudioRecorder';
-import DisplayText from './components/DisplayText';
-import VideoPlayer from './components/VideoPlayer';
+import React from 'react';
+import './App.css';
+import SpeechToText from './components/SpeechToText';  // Import the SpeechToText component
 
 function App() {
-  const [audioText, setAudioText] = useState('');
-  const [videoUrl, setVideoUrl] = useState('');
-
   return (
     <div className="App">
       <header className="App-header">
-        <h1>Narrato</h1>
+        <h1>Welcome to Narrato</h1>
       </header>
       <main>
-        {/* Audio Recording Component */}
-        <AudioRecorder setAudioText={setAudioText} />
-        
-        {/* Displaying the transcribed text */}
-        {audioText && <DisplayText text={audioText} />}
-        
-        {/* Video Player to display generated video */}
-        {videoUrl && <VideoPlayer videoUrl={videoUrl} />}
+        <SpeechToText />  {/* Include the SpeechToText component here */}
       </main>
     </div>
   );
