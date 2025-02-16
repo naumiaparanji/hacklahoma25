@@ -144,7 +144,7 @@ with st.sidebar:
     st.markdown('</div>', unsafe_allow_html=True)
 
 # Main app logic
-st.title("Mindful YouTube Summary Assistant")
+st.title("TimeTreak - journey to mindfulness begins here!")
 st.markdown("""
 This tool helps you extract key insights from YouTube videos without spending excessive time watching them. 
 It respects your attention by providing concise summaries and encouraging real-world engagement.
