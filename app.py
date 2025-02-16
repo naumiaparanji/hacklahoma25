@@ -183,7 +183,7 @@ if st.button("Get Mindful Summaries"):
                 st.markdown(f"### Video {i}")
                 try:
                     video_id = url.split("=")[1]
-                    st.image(f"http://img.youtube.com/vi/{video_id}/0.jpg", use_column_width=True)
+                    st.image(f"http://img.youtube.com/vi/{video_id}/0.jpg", use_container_width=True)
 
                     transcript_text = extract_transcript_details(url)
                     if transcript_text:
