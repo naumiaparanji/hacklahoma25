@@ -8,6 +8,9 @@ from io import BytesIO
 import time
 import random
 import base64
+import yt_dlp
+import librosa
+
 # Load environment variables
 load_dotenv()
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
@@ -21,9 +24,9 @@ At the end, suggest one real-world activity or discussion topic related to the v
 motivational_messages = [
     "Keep going! Every step forward is a step closer to achieving your goals. 🌟",
     "Great things take time. Stay focused and stay positive! 💪",
-    "Believe in yourself and all that you are. You’re on the right track! 🌱",
+    "Believe in yourself and all that you are. You're on the right track! 🌱",
     "Success is the sum of small efforts, repeated day in and day out. Keep at it! 🔥",
-    "Every accomplishment starts with the decision to try. You’ve got this! 🌟"
+    "Every accomplishment starts with the decision to try. You've got this! 🌟"
 ]
 
 # Function to extract transcript from YouTube video
@@ -57,9 +60,22 @@ def get_base64(file_path):
         encoded = base64.b64encode(file.read()).decode()
     return f"data:image/jpeg;base64,{encoded}"
 
+# Function to get video duration
+def get_video_duration(url):
+    ydl_opts = {}
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=False)
+        duration = info['duration']
+    return duration
+
+# Function to get audio duration
+def get_audio_duration(audio_fp):
+    audio_fp.seek(0)
+    duration = librosa.get_duration(filename=audio_fp)
+    return duration
+
 # Get Base64 string
 img_base64 = get_base64("img.jpeg")  # Ensure "img.jpeg" is in the same directory
-
 
 # CSS for the trek theme
 css = f"""
@@ -70,7 +86,7 @@ css = f"""
             background-position: center;
         }}
         h2, h3, h4 {{
-            color: #4b2e1c; 
+            color: #4b2e1c;
         }}
         .stButton>button {{
             background-color: #656d4a;
@@ -83,7 +99,6 @@ css = f"""
         .stTextArea textarea {{
         background: transparent !important;
         border: 2px solid #e2cfc1 !important;
-        color: white !important;
         font-size: 16px !important;
     }}
     .stTextArea textarea::placeholder {{
@@ -134,6 +149,26 @@ css = f"""
             margin-bottom: 20px;
             width: 100%;
         }}
+        .time-saved-box {{
+            background-color: #e8f5e9;
+            border-left: 5px solid #4caf50;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            font-size: 16px;
+            color: #2d2d2d;
+        }}
+        .total-time-saved-box {{
+            background-color: #4b2e1c;
+            color: white;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+        }}
     </style>
 """
 
@@ -142,18 +177,14 @@ st.markdown(css, unsafe_allow_html=True)
 
 # Sidebar layout
 with st.sidebar:
-    # Initialize daily_limit in session_state if it doesn't exist
     if 'daily_limit' not in st.session_state:
-        st.session_state.daily_limit = 10  # Default limit
+        st.session_state.daily_limit = 10
 
-    # Set daily usage limit
     daily_limit = st.number_input("Set daily usage limit", min_value=1, max_value=20, value=st.session_state.daily_limit)
     st.session_state.daily_limit = daily_limit
 
-    # Display a random motivational message
     st.markdown(f'<div class="motivational-message">{random.choice(motivational_messages)}</div>', unsafe_allow_html=True)
 
-    # Display Leaderboard and Badges side by side
     st.markdown('<div class="leaderboard-badges">', unsafe_allow_html=True)
     st.markdown('<div class="section-box"><h3>Leaderboard</h3><p>1. Hermione - 100 points</p><p>2. Harry - 80 points</p><p>3. Ron - 60 points</p></div>', unsafe_allow_html=True)
     st.markdown('<div class="section-box"><h3>Badges Earned</h3><p>🏆 Explorer Badge: Completed 5 videos</p><p>🎯 Focused Trekker Badge: Reduced screen time by 20% this week</p></div>', unsafe_allow_html=True)
@@ -162,7 +193,7 @@ with st.sidebar:
 # Main app logic
 st.title("TimeTreak - journey to mindfulness begins here!")
 st.markdown("""
-This tool helps you extract key insights from YouTube videos without spending excessive time watching them. 
+This tool helps you extract key insights from YouTube videos without spending excessive time watching them.
 It respects your attention by providing concise summaries and encouraging real-world engagement.
 """)
 
@@ -171,15 +202,16 @@ youtube_links = st.text_area("Enter YouTube Video Links (one per line):")
 if st.button("Get Mindful Summaries"):
     if youtube_links:
         urls = [url.strip() for url in youtube_links.split('\n') if url.strip()]
+        total_time_saved = 0
 
         with st.spinner("Processing videos... Please take a moment to breathe and reflect."):
-            time.sleep(3)  # Encourage a brief pause for mindfulness
+            time.sleep(3)
 
         cols = st.columns(len(urls))
 
         for i, (url, col) in enumerate(zip(urls, cols), 1):
             with col:
-                st.markdown(f'<div class="summary-box">', unsafe_allow_html=True)  # Wrap content in a styled div
+                st.markdown(f'<div class="summary-box">', unsafe_allow_html=True)
                 st.markdown(f"### Video {i}")
                 try:
                     video_id = url.split("=")[1]
@@ -195,6 +227,17 @@ if st.button("Get Mindful Summaries"):
                         with st.expander("Listen to Summary"):
                             st.audio(audio_fp, format='audio/mp3')
 
+                        video_duration = get_video_duration(url)
+                        audio_duration = get_audio_duration(audio_fp)
+                        time_saved = video_duration - audio_duration
+                        total_time_saved += time_saved
+
+                        st.markdown(f"""
+                            <div class="time-saved-box">
+                                Time saved for this video: {int(time_saved)} seconds
+                            </div>
+                        """, unsafe_allow_html=True)
+
                         st.download_button(
                             label="Download Audio Summary",
                             data=audio_fp,
@@ -205,7 +248,15 @@ if st.button("Get Mindful Summaries"):
                         st.error("Failed to extract transcript.")
                 except Exception as e:
                     st.error(f"Error processing video {i}: {str(e)}")
-                st.markdown("</div>", unsafe_allow_html=True)  # Close the styled div
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        hours, remainder = divmod(total_time_saved, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        st.markdown(f"""
+            <div class="total-time-saved-box">
+                Total time saved: {int(hours)} hours, {int(minutes)} minutes, and {int(seconds)} seconds
+            </div>
+        """, unsafe_allow_html=True)
 
         st.markdown("""
         ## Mindful Reflection
@@ -229,7 +280,7 @@ st.session_state.usage_count += 1
 if st.session_state.usage_count % 5 == 0:
     st.markdown("""
     ### Mindful Technology Use Reminder
-    You've used this tool several times today. Consider taking a break to reflect on what you've learned 
+    You've used this tool several times today. Consider taking a break to reflect on what you've learned
     or engage in a non-digital activity related to the content you've summarized.
     """)
 
