@@ -7,7 +7,7 @@ from gtts import gTTS
 from io import BytesIO
 import time
 import random
-
+import base64
 # Load environment variables
 load_dotenv()
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
@@ -51,65 +51,81 @@ def text_to_speech(text, language='en'):
     fp.seek(0)
     return fp
 
+# Convert local image to Base64
+def get_base64(file_path):
+    with open(file_path, "rb") as file:
+        encoded = base64.b64encode(file.read()).decode()
+    return f"data:image/jpeg;base64,{encoded}"
+
+# Get Base64 string
+img_base64 = get_base64("img.jpeg")  # Ensure "img.jpeg" is in the same directory
+
+
 # CSS for the trek theme
-css = """
+css = f"""
     <style>
-        body {
-            background-color: #f4f4f4;
-            background-image: url('background.jpg');
-            background-size: cover;
+        body , [data-testid="stAppViewContainer"], [data-testid="stSidebar"] {{
+             background: url('{img_base64}') no-repeat center center fixed !important;
+            background-size: cover !important;
             background-position: center;
-            font-family: 'Roboto', sans-serif;
-            color: #3e3e3e;
-        }
-        h2, h3, h4 {
+        }}
+        h2, h3, h4 {{
             color: #4b2e1c; 
-        }
-        .stButton>button {
+        }}
+        .stButton>button {{
             background-color: #656d4a;
             color: white;
             border-radius: 12px;
             padding: 10px 20px;
             box-shadow: 0px 5px 10px #656d4a;
             transition: 0.3s;
-        }
-        .stButton>button:hover {
+        }}
+        .stTextArea textarea {{
+        background: transparent !important;
+        border: 2px solid #e2cfc1 !important;
+        color: white !important;
+        font-size: 16px !important;
+    }}
+    .stTextArea textarea::placeholder {{
+        color: rgba(255, 255, 255, 0.6) !important;
+    }}
+        .stButton>button:hover {{
             background-color: #656d4a;
             color: white;
             border-color: #656d4a;
-        }
-        .stTextInput>div>input {
+        }}
+        .stTextInput>div>input {{
             background-color: #656d4a;
             border: 2px solid #e2cfc1;
             padding: 10px;
             border-radius: 8px;
             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .stTextInput>div>input:focus {
+        }}
+        .stTextInput>div>input:focus {{
             border-color: #4b2e1c;
             outline: none;
-        }
-        .stMarkdown {
+        }}
+        .stMarkdown {{
             color: #3a5a40;
-        }
-        h1 {
+        }}
+        h1 {{
             color: #38a3a5;
             text-align: center;
-        }
-        .motivational-message {
+        }}
+        .motivational-message {{
             text-align: center;
             font-size: 24px;
             color: #7f4f24;
             font-weight: bold;
             margin-bottom: 20px;
-        }
-        .leaderboard-badges {
+        }}
+        .leaderboard-badges {{
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 20px;
             margin-bottom: 30px;
-        }
-        .section-box {
+        }}
+        .section-box {{
             padding: 5px;
             border-radius: 15px;
             background-color: rgba(255, 255, 255, 0.8);
@@ -117,7 +133,7 @@ css = """
             text-align: center;
             margin-bottom: 20px;
             width: 100%;
-        }
+        }}
     </style>
 """
 
@@ -163,6 +179,7 @@ if st.button("Get Mindful Summaries"):
 
         for i, (url, col) in enumerate(zip(urls, cols), 1):
             with col:
+                st.markdown(f'<div class="summary-box">', unsafe_allow_html=True)  # Wrap content in a styled div
                 st.markdown(f"### Video {i}")
                 try:
                     video_id = url.split("=")[1]
@@ -188,6 +205,7 @@ if st.button("Get Mindful Summaries"):
                         st.error("Failed to extract transcript.")
                 except Exception as e:
                     st.error(f"Error processing video {i}: {str(e)}")
+                st.markdown("</div>", unsafe_allow_html=True)  # Close the styled div
 
         st.markdown("""
         ## Mindful Reflection
