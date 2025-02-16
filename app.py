@@ -1,14 +1,15 @@
 import streamlit as st
 from dotenv import load_dotenv
-
-load_dotenv()
 import os
 import google.generativeai as genai
 from youtube_transcript_api import YouTubeTranscriptApi
 from gtts import gTTS
 from io import BytesIO
 import time
+import random
 
+# Load environment variables
+load_dotenv()
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
 prompt = """Summarize the key points of this video in a concise, easy-to-digest format. 
@@ -16,7 +17,16 @@ Focus on the most important ideas and actionable insights.
 Limit the summary to 3-5 bullet points, each no longer than 20 words. 
 At the end, suggest one real-world activity or discussion topic related to the video content."""
 
+# Motivational messages
+motivational_messages = [
+    "Keep going! Every step forward is a step closer to achieving your goals. 🌟",
+    "Great things take time. Stay focused and stay positive! 💪",
+    "Believe in yourself and all that you are. You’re on the right track! 🌱",
+    "Success is the sum of small efforts, repeated day in and day out. Keep at it! 🔥",
+    "Every accomplishment starts with the decision to try. You’ve got this! 🌟"
+]
 
+# Function to extract transcript from YouTube video
 def extract_transcript_details(youtube_video_url):
     try:
         video_id = youtube_video_url.split("=")[1]
@@ -27,13 +37,13 @@ def extract_transcript_details(youtube_video_url):
         st.error(f"Error extracting transcript: {str(e)}")
         return None
 
-
+# Function to generate content summary using Google Gemini Pro
 def generate_gemini_content(transcript_text, prompt):
     model = genai.GenerativeModel("gemini-pro")
     response = model.generate_content(prompt + transcript_text)
     return response.text
 
-
+# Convert text to speech
 def text_to_speech(text, language='en'):
     tts = gTTS(text=text, lang=language, slow=False)
     fp = BytesIO()
@@ -41,9 +51,98 @@ def text_to_speech(text, language='en'):
     fp.seek(0)
     return fp
 
+# CSS for the trek theme
+css = """
+    <style>
+        body {
+            background-color: #f4f4f4;
+            background-image: url('background.jpg');
+            background-size: cover;
+            background-position: center;
+            font-family: 'Roboto', sans-serif;
+            color: #3e3e3e;
+        }
+        h2, h3, h4 {
+            color: #4b2e1c; 
+        }
+        .stButton>button {
+            background-color: #656d4a;
+            color: white;
+            border-radius: 12px;
+            padding: 10px 20px;
+            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.2);
+            transition: 0.3s;
+        }
+        .stButton>button:hover {
+            background-color: #656d4a;
+        }
+        .stTextInput>div>input {
+            background-color: #656d4a;
+            border: 2px solid #e2cfc1;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .stTextInput>div>input:focus {
+            border-color: #4b2e1c;
+            outline: none;
+        }
+        .stMarkdown {
+            color: #3a5a40;
+        }
+        h1 {
+            color: #38a3a5;
+            text-align: center;
+        }
+        .motivational-message {
+            text-align: center;
+            font-size: 24px;
+            color: #7f4f24;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .leaderboard-badges {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .section-box {
+            padding: 5px;
+            border-radius: 15px;
+            background-color: rgba(255, 255, 255, 0.8);
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+    </style>
+"""
 
+# Inject CSS
+st.markdown(css, unsafe_allow_html=True)
+
+# Sidebar layout
+with st.sidebar:
+    # Initialize daily_limit in session_state if it doesn't exist
+    if 'daily_limit' not in st.session_state:
+        st.session_state.daily_limit = 10  # Default limit
+
+    # Set daily usage limit
+    daily_limit = st.number_input("Set daily usage limit", min_value=1, max_value=20, value=st.session_state.daily_limit)
+    st.session_state.daily_limit = daily_limit
+
+    # Display a random motivational message
+    st.markdown(f'<div class="motivational-message">{random.choice(motivational_messages)}</div>', unsafe_allow_html=True)
+
+    # Display Leaderboard and Badges side by side
+    st.markdown('<div class="leaderboard-badges">', unsafe_allow_html=True)
+    st.markdown('<div class="section-box"><h3>Leaderboard</h3><p>1. Hermione - 100 points</p><p>2. Harry - 80 points</p><p>3. Ron - 60 points</p></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-box"><h3>Badges Earned</h3><p>🏆 Explorer Badge: Completed 5 videos</p><p>🎯 Focused Trekker Badge: Reduced screen time by 20% this week</p></div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# Main app logic
 st.title("Mindful YouTube Summary Assistant")
-
 st.markdown("""
 This tool helps you extract key insights from YouTube videos without spending excessive time watching them. 
 It respects your attention by providing concise summaries and encouraging real-world engagement.
@@ -113,14 +212,6 @@ if st.session_state.usage_count % 5 == 0:
     You've used this tool several times today. Consider taking a break to reflect on what you've learned 
     or engage in a non-digital activity related to the content you've summarized.
     """)
-
-# Add a daily limit feature
-if 'daily_limit' not in st.session_state:
-    st.session_state.daily_limit = 10
-
-daily_limit = st.sidebar.number_input("Set daily usage limit", min_value=1, max_value=20,
-                                      value=st.session_state.daily_limit)
-st.session_state.daily_limit = daily_limit
 
 if st.session_state.usage_count >= st.session_state.daily_limit:
     st.warning(
