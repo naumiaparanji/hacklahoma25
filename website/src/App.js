@@ -1,18 +1,28 @@
-import React from 'react';
-import './App.css';
-import SpeechToText from './components/SpeechToText';  // Import the SpeechToText component
+import React, { useState } from 'react';
+import SpeechToText from './components/SpeechToText';
+import VideoPlayer from './components/VideoPlayer';
 
-function App() {
+const App = () => {
+  const [videoUrl, setVideoUrl] = useState('');
+
+  const handleTranscript = (transcript) => {
+    // Match the transcript and select the corresponding video
+    if (transcript.toLowerCase().includes("spiderman is surfing")) {
+      setVideoUrl('./images/spiderman-surfing.mp4'); // Hardcoded video URL for "Spiderman is Surfing"
+    } else if (transcript.toLowerCase().includes("girl walks home")) {
+      setVideoUrl('/path/to/girl-walks-home.mp4'); // Hardcoded video URL for "Girl Walks Home"
+    } else {
+      setVideoUrl(''); // Clear video if transcript doesn't match
+    }
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>Welcome to Narrato</h1>
-      </header>
-      <main>
-        <SpeechToText />  {/* Include the SpeechToText component here */}
-      </main>
+    <div>
+      <h1>Speech to Video Example</h1>
+      <SpeechToText onTranscript={handleTranscript} />
+      {videoUrl && <VideoPlayer videoUrl={videoUrl} />}
     </div>
   );
-}
+};
 
 export default App;

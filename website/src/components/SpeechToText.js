@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-const SpeechToText = () => {
+const SpeechToText = ({ onTranscript }) => {
   const [transcript, setTranscript] = useState('');
   const [isListening, setIsListening] = useState(false);
 
@@ -8,8 +8,8 @@ const SpeechToText = () => {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const recognition = new SpeechRecognition();
   recognition.lang = 'en-US';
-  recognition.continuous = true;
-  recognition.interimResults = true;
+  recognition.continuous = true; // Keep listening until stopped
+  recognition.interimResults = true; // Show interim results as we go
 
   recognition.onresult = (event) => {
     let transcriptText = '';
@@ -17,6 +17,7 @@ const SpeechToText = () => {
       transcriptText += event.results[i][0].transcript;
     }
     setTranscript(transcriptText);
+    onTranscript(transcriptText);  // Send the transcript to parent component
   };
 
   recognition.onerror = (event) => {
@@ -39,7 +40,7 @@ const SpeechToText = () => {
 
   return (
     <div style={{ textAlign: 'center', margin: '50px' }}>
-      <h1>Speech To Text</h1>
+      <h2>Say something...</h2>
       <button onClick={toggleListening} style={{ padding: '10px 20px', fontSize: '16px' }}>
         {isListening ? 'Stop Listening' : 'Start Listening'}
       </button>
